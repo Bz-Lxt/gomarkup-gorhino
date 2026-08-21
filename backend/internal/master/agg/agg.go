@@ -60,15 +60,15 @@ func (a *Aggregator) Ingest(s model.WorkerSnap) {
 	a.req += s.Requests
 	a.err += s.Errors
 	a.sumUS += s.SumLatUS
+	a.runReq += s.Requests
+	a.runErr += s.Errors
+	a.runSum += s.SumLatUS
 	for code, n := range s.StatusCode {
 		key := bucket(code)
 		a.codes[key] += int(n)
 		a.runCod[key] += int(n)
 	}
 	a.mu.Unlock()
-	a.runReq += s.Requests
-	a.runErr += s.Errors
-	a.runSum += s.SumLatUS
 }
 
 func bucket(code int32) string {
