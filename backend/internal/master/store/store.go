@@ -321,17 +321,17 @@ func (s *Store) GetReport(id string) (*model.Report, error) {
 	}
 	var r model.Report
 	r.Task = *t
-	var codes string
+	var codes sql.NullString
 	err = s.db.QueryRow(
 		`SELECT final_rps,p50_ms,p95_ms,p99_ms,avg_ms,error_rate,total_requests,total_errors,codes FROM reports WHERE task_id=?`, id,
 	).Scan(&r.FinalRPS, &r.P50MS, &r.P95MS, &r.P99MS, &r.AvgMS, &r.ErrorRate, &r.TotalRequests, &r.TotalErrors, &codes)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
-	r.Codes = model.ParseCodes(codes)
+	// No report row yet (e.g. master restarted and marked the running task
+	// failed before workers could report final stats): still return a report
+	// built from the task and whatever snapshots exist, mirroring ListReports.
+	r.Codes = model.ParseCodes(codes.String)
 	series, err := s.ListSnapshots(id)
 	if err != nil {
 		return nil, err
