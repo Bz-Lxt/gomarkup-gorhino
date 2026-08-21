@@ -168,14 +168,17 @@ func MatchWhitelist(raw string, patterns []string) bool {
 	}
 	host := strings.ToLower(u.Hostname())
 	port := u.Port()
+	rawLower := strings.ToLower(raw)
 	for _, p := range patterns {
 		p = strings.TrimSpace(p)
 		if p == "" {
 			continue
 		}
-		pl := p
+		// Compare both sides case-insensitively so that patterns such as
+		// "HTTP://127.0.0.1:8088" still match "http://127.0.0.1:8088/echo".
+		pl := strings.ToLower(p)
 		if strings.HasPrefix(pl, "http://") || strings.HasPrefix(pl, "https://") {
-			if strings.HasPrefix(strings.ToLower(raw), pl) {
+			if strings.HasPrefix(rawLower, pl) {
 				return true
 			}
 			continue
