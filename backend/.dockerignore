@@ -1,0 +1,8 @@
+bin/
+vendor/
+*.test
+*.out
+.git
+*.db
+*.db-wal
+*.db-shm
