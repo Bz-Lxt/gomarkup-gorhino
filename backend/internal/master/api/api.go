@@ -189,31 +189,32 @@ func mapErr(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, store.ErrNotFound):
 		writeErr(w, 404, "TASK_NOT_FOUND", err.Error())
-	case err == store.ErrConflict:
-		if strings.Contains(err.Error(), "running") {
-			writeErr(w, 409, "TASK_ALREADY_RUNNING", err.Error())
-			return
+	case errors.Is(err, store.ErrConflict):
+		msg := err.Error()
+		switch {
+		case strings.Contains(msg, "running"):
+			writeErr(w, 409, "TASK_ALREADY_RUNNING", msg)
+		case strings.Contains(msg, "worker"):
+			writeErr(w, 409, "NO_WORKERS", msg)
+		case strings.Contains(msg, "draft"):
+			writeErr(w, 409, "TASK_NOT_DRAFT", "任务已结束，无法重复启动")
+		default:
+			writeErr(w, 409, "TASK_STATE_CONFLICT", msg)
 		}
-		if strings.Contains(err.Error(), "worker") {
-			writeErr(w, 409, "NO_WORKERS", err.Error())
-			return
-		}
-		writeErr(w, 409, "TASK_ALREADY_RUNNING", err.Error())
 	default:
 		msg := err.Error()
-		if strings.Contains(msg, "whitelist") || strings.Contains(msg, "SSRF") || strings.Contains(msg, "validation") {
+		switch {
+		case strings.Contains(msg, "whitelist") || strings.Contains(msg, "SSRF") || strings.Contains(msg, "validation"):
 			writeErr(w, 400, "VALIDATION_FAILED", msg)
-			return
-		}
-		if strings.Contains(msg, "no alive workers") {
+		case strings.Contains(msg, "no alive workers"):
 			writeErr(w, 409, "NO_WORKERS", msg)
-			return
-		}
-		if strings.Contains(msg, "already running") {
+		case strings.Contains(msg, "already running"):
 			writeErr(w, 409, "TASK_ALREADY_RUNNING", msg)
-			return
+		case strings.Contains(msg, "not draft"):
+			writeErr(w, 409, "TASK_NOT_DRAFT", "任务已结束，无法重复启动")
+		default:
+			writeErr(w, 500, "INTERNAL", msg)
 		}
-		writeErr(w, 500, "INTERNAL", msg)
 	}
 }
 
