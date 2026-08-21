@@ -191,7 +191,7 @@ func (e *Engine) do(spec Spec) (int32, time.Duration, string) {
 	for k, v := range spec.Headers {
 		req.Header.Set(k, v)
 	}
-	if len(spec.Body) > 0 && (spec.Method == "POST" || spec.Method == "PUT") {
+	if len(spec.Body) > 0 {
 		req.SetBody(spec.Body)
 	}
 
