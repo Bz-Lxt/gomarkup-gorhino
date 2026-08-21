@@ -195,9 +195,6 @@ func (a *App) StartTask(id string) (*model.Task, error) {
 	if t.Status != model.StatusDraft {
 		return nil, ErrNotDraft
 	}
-	if err := a.store.MarkRunning(id); err != nil {
-		return nil, err
-	}
 	if a.cluster.AliveCount() == 0 {
 		return nil, ErrNoWorkers
 	}
@@ -208,13 +205,20 @@ func (a *App) StartTask(id string) (*model.Task, error) {
 	if err := validate.CheckURL(t.URL, patterns); err != nil {
 		return nil, err
 	}
+	if err := a.store.MarkRunning(id); err != nil {
+		return nil, err
+	}
 	t, err = a.store.GetTask(id)
 	if err != nil {
+		// MarkRunning already succeeded; revert to draft so the task can be retried.
+		_ = a.store.RevertRunning(id)
 		return nil, err
 	}
 	a.agg.Begin(t)
 	n, err := a.cluster.DispatchStart(t)
 	if err != nil {
+		// Dispatch failed after the task was marked running; revert to draft.
+		_ = a.store.RevertRunning(id)
 		return nil, err
 	}
 	a.mu.Lock()

@@ -270,6 +270,11 @@ func (s *Store) FinishTask(id, status string) error {
 	return err
 }
 
+func (s *Store) RevertRunning(id string) error {
+	_, err := s.db.Exec(`UPDATE tasks SET status=?, started_at=NULL WHERE id=? AND status=?`, model.StatusDraft, id, model.StatusRunning)
+	return err
+}
+
 func (s *Store) InsertSnapshot(sn model.Snapshot) error {
 	_, err := s.db.Exec(
 		`INSERT INTO snapshots(task_id,ts,rps,p50_ms,p95_ms,p99_ms,avg_ms,error_rate,codes,workers,elapsed_sec,remaining_sec)
