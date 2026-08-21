@@ -262,7 +262,7 @@ func Listen(ctx context.Context, log *slog.Logger, httpAddr, grpcAddr string, a 
 	}()
 	select {
 	case <-ctx.Done():
-		shctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		shctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		_ = hs.Shutdown(shctx)
 		gs.GracefulStop()
