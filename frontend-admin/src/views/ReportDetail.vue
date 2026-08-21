@@ -21,6 +21,13 @@ const xs = computed(() => (report.value?.series || []).map((s) => (s.ts || '').s
 const rps = computed(() => (report.value?.series || []).map((s) => s.rps))
 const p95 = computed(() => (report.value?.series || []).map((s) => s.p95_ms))
 const p99 = computed(() => (report.value?.series || []).map((s) => s.p99_ms))
+
+function pillClass(s) {
+  if (s === 'completed') return 'border-phosphor text-phosphor'
+  if (s === 'stopped') return 'border-warn text-warn'
+  if (s === 'failed') return 'border-danger text-danger'
+  return 'border-line text-muted'
+}
 </script>
 
 <template>
@@ -30,7 +37,8 @@ const p99 = computed(() => (report.value?.series || []).map((s) => s.p99_ms))
       <h1 class="font-display text-2xl">{{ report.id }}</h1>
       <p class="mt-1 font-mono text-xs text-muted">
         {{ report.method }} {{ report.url }} · tag {{ report.version_tag }} ·
-        {{ report.started_at }} → {{ report.ended_at }}
+        {{ report.started_at || '—' }} → {{ report.ended_at || '—' }}
+        <span v-if="report.status" class="pill ml-2" :class="pillClass(report.status)">{{ report.status }}</span>
       </p>
     </div>
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
