@@ -83,14 +83,18 @@ func (e *Engine) Run(ctx context.Context, spec Spec, emit func(Tick)) error {
 	var limiter *rate.Limiter
 	var rateCtx context.Context
 	var cancelRate context.CancelFunc
-	if spec.QPS > 0 {
-		limiter = rate.NewLimiter(rate.Limit(spec.QPS), max(1, spec.QPS/10))
-		rateCtx, cancelRate = context.WithCancel(ctx)
-		defer cancelRate()
-	}
 
 	runCtx, cancel := context.WithTimeout(ctx, spec.Duration)
 	defer cancel()
+
+	if spec.QPS > 0 {
+		limiter = rate.NewLimiter(rate.Limit(spec.QPS), max(1, spec.QPS/10))
+		// Derive from runCtx so the duration deadline also cancels any VU
+		// blocked inside limiter.Wait. Otherwise VUs keep waiting for tokens
+		// and fire more requests after the duration has expired.
+		rateCtx, cancelRate = context.WithCancel(runCtx)
+		defer cancelRate()
+	}
 
 	var wg sync.WaitGroup
 	for i := 0; i < spec.VU; i++ {
