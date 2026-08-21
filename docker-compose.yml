@@ -1,0 +1,78 @@
+services:
+  master:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: master
+    environment:
+      - TZ=Asia/Shanghai
+      - GORHINO_HTTP_ADDR=:8080
+      - GORHINO_GRPC_ADDR=:9090
+      - GORHINO_DB_PATH=/data/gorhino.db
+      - GORHINO_LOG_LEVEL=info
+      - GORHINO_DEFAULT_WHITELIST=target,target:8088,http://target:8088,http://target:8088/echo,http://target:8088/slow,http://target:8088/error,http://127.0.0.1:8088/echo
+    volumes:
+      - gorhino-data:/data
+    ports:
+      - "37102:8080"
+      - "37103:9090"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/v1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      target:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: worker
+    environment:
+      - TZ=Asia/Shanghai
+      - GORHINO_MASTER_GRPC=master:9090
+      - GORHINO_LOG_LEVEL=info
+    depends_on:
+      master:
+        condition: service_healthy
+    deploy:
+      replicas: 2
+
+  target:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: target
+    environment:
+      - TZ=Asia/Shanghai
+      - GORHINO_TARGET_ADDR=:8088
+      - GORHINO_LOG_LEVEL=info
+    ports:
+      - "37104:8088"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8088/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  frontend-admin:
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - "37101:80"
+    depends_on:
+      master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  gorhino-data:
