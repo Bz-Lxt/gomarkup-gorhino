@@ -1,0 +1,42 @@
+# Alkaid gatekeeper (local protocol flag)
+.alkaid-sop
+
+# Git / OS
+.DS_Store
+*.swp
+*.swo
+Thumbs.db
+
+# Go
+backend/bin/
+backend/vendor/
+*.test
+*.out
+coverage.out
+
+# Node
+frontend-admin/node_modules/
+frontend-admin/dist/
+npm-debug.log*
+.vite/
+
+# SQLite / runtime
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Playwright
+tests/.auth/
+test-results/
+playwright-report/
+blob-report/
+
+# Env
+.env
+.env.local
