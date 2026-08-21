@@ -113,7 +113,7 @@ func (e *Engine) Run(ctx context.Context, spec Spec, emit func(Tick)) error {
 				switch kind {
 				case "ok":
 					addCode(status)
-					if status < 200 || status >= 400 {
+					if status < 200 || status >= 300 {
 						errs.Add(1)
 					}
 				case "timeout":
