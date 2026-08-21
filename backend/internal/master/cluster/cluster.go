@@ -188,7 +188,7 @@ func (c *Cluster) DispatchStart(task *model.Task) (int, error) {
 		}
 	}
 	vus := shard.VUs(task.VU, len(ids))
-	qps := append(vus[:0], shard.QPS(task.QPS, len(ids))...)
+	qps := shard.QPS(task.QPS, len(ids))
 	for i, id := range ids {
 		n := c.nodes[id]
 		n.info.AssignedVU = 0
