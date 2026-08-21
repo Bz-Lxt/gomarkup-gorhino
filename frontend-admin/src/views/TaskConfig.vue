@@ -110,7 +110,12 @@ async function startNow() {
     toast.ok('已下发，转入实时监控')
     router.push('/live')
   } catch (e) {
-    toast.err(e.message || '启动失败')
+    const code = e.code || ''
+    if (code === 'TASK_NOT_DRAFT' || code === 'TASK_ALREADY_RUNNING' || code === 'TASK_STATE_CONFLICT') {
+      toast.info(e.message || '任务状态冲突，无法启动')
+    } else {
+      toast.err(e.message || '启动失败')
+    }
   } finally {
     submitting.value = false
   }
